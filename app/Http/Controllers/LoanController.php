@@ -117,14 +117,12 @@ class LoanController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'loan_amount'=>'required',
-            'loan_term'=>'required',
-            'interest_rate'=>'required',
-            'month'=>'required',
-            'year'=>'required'
-
+            'loan_amount'=>'required|integer',
+            'loan_term'=>'required|integer|between:1,50',
+            'interest_rate'=> ['required', 'regex:/^([1-9]|3[0-5]|[12]\d{1,2}|36\.00){1}(\.[0-9]{1,2})?$/'],
+            'month'=>'required|integer|between:1,12',
+            'year'=>'required|integer|between:2017,2050'
         ]);
-        // dd($request);
         Loan::find($id)->update([
             'loan_amount'=>$request->loan_amount,
             'loan_term'=>$request->loan_term,
