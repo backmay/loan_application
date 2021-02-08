@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\RepaymentSchedule;
 use Illuminate\Http\Request;
 use \App\Http\Requests\StoreAndUpdateRequest;
 use App\Loan;
@@ -40,14 +41,18 @@ class LoanController extends Controller
     public function store(StoreAndUpdateRequest $request)
     {
         $validated = $request->validated();
-        Loan::create(
-            [
-                'loan_amount' => $request->loan_amount,
-                'loan_term' => $request->loan_term,
-                'interest_rate' => $request->interest_rate,
-                'start_date' => $request->year . '-' . $request->month . '-01',
-            ]
-        );
+
+        $loan = new Loan;
+        $loan->loan_amount = $request->loan_amount;
+        $loan->loan_term = $request->loan_term;
+        $loan->interest_rate = $request->interest_rate/100;
+        $loan->start_date = $request->year . '-' . $request->month . '-01';
+        $loan->pmt = $request->loan_amount * ($request->interest_rate/100 / 12) / (1 - ((1 + ($request->interest_rate/100 / 12)) ** (-12 * $request->loan_term)));
+        $loan->save();
+
+//        $repaymentScheduler = new RepaymentSchedule;
+
+
         return redirect('/loan');
     }
 
@@ -63,7 +68,7 @@ class LoanController extends Controller
 
         $LoanAmount = $data->loan_amount;
         $loanTerm = $data->loan_term;
-        $interestRate = $data->interest_rate / 100;
+        $interestRate = $data->interest_rate;
         $PMT = $LoanAmount * ($interestRate / 12) / (1 - ((1 + ($interestRate / 12)) ** (-12 * $loanTerm)));
 
         $outstandingBalance = $LoanAmount;
@@ -83,7 +88,7 @@ class LoanController extends Controller
             array_push($paymentSchedule, $payment);
             date_add($datetime, date_interval_create_from_date_string('1 months'));
         }
-        return view('loan.show', compact(['data', 'payment_schedule']));
+        return view('loan.show', compact(['data', 'paymentSchedule']));
     }
 
     /**

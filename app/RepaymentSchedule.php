@@ -4,14 +4,14 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Loan extends Model
+class RepaymentSchedule extends Model
 {
     protected $fillable = [
         'loan_amount', 'loan_term', 'interest_rate', 'start_date',
     ];
 
-    public function repaymentSchedule()
+    public function loan()
     {
-        return $this->hasMany(RepaymentSchedule::class);
+        return $this->belongsTo(Loan::class);
     }
 }
