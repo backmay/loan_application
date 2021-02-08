@@ -61,26 +61,26 @@ class LoanController extends Controller
     {
         $data = Loan::find($id);
 
-        $loan_amount = $data->loan_amount;
-        $loan_term = $data->loan_term;
-        $interest_rate = $data->interest_rate / 100;
-        $PMT = $loan_amount * ($interest_rate / 12) / (1 - ((1 + ($interest_rate / 12)) ** (-12 * $loan_term)));
+        $LoanAmount = $data->loan_amount;
+        $loanTerm = $data->loan_term;
+        $interestRate = $data->interest_rate / 100;
+        $PMT = $LoanAmount * ($interestRate / 12) / (1 - ((1 + ($interestRate / 12)) ** (-12 * $loanTerm)));
 
-        $outstanding_balance = $loan_amount;
+        $outstandingBalance = $LoanAmount;
         $datetime = new DateTime($data->start_date);
-        $payment_schedule = array();
-        while ($outstanding_balance > 0.1) {
-            $interest = ($interest_rate / 12) * $outstanding_balance;
-            $outstanding_balance = $outstanding_balance - ($PMT - $interest);
+        $paymentSchedule = array();
+        while ($outstandingBalance > 0.1) {
+            $interest = ($interestRate / 12) * $outstandingBalance;
+            $outstandingBalance = $outstandingBalance - ($PMT - $interest);
             $payment = [
                 "datetime" => date_format($datetime, 'M Y'),
-                "outstanding_balance" => $outstanding_balance,
+                "outstanding_balance" => $outstandingBalance,
                 "payment_amount" => $PMT,
                 "interest" => $interest,
                 "principal" => ($PMT - $interest)
 
             ];
-            array_push($payment_schedule, $payment);
+            array_push($paymentSchedule, $payment);
             date_add($datetime, date_interval_create_from_date_string('1 months'));
         }
         return view('loan.show', compact(['data', 'payment_schedule']));
@@ -95,9 +95,9 @@ class LoanController extends Controller
     public function edit($id)
     {
         $data = Loan::find($id);
-        $datetime = new DateTime($data->start_date);
-        $data->year = $datetime->format('Y');
-        $data->month = $datetime->format('n');
+        $dateTime = new DateTime($data->start_date);
+        $data->year = $dateTime->format('Y');
+        $data->month = $dateTime->format('n');
 
         return view('loan.edit', compact(['data']));
     }
