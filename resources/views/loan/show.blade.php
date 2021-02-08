@@ -41,7 +41,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($payment_schedule as $attribute => $value)
+            @foreach($paymentSchedule as $attribute => $value)
             <tr>
                 <td>{{ $attribute + 1}}</td>
                 <td>{{ $value['datetime'] }}</td>
