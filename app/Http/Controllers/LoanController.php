@@ -40,7 +40,7 @@ class LoanController extends Controller
      */
     public function store(StoreAndUpdateRequest $request)
     {
-        $validated = $request->validated();
+        $request->validated();
 
         $loan = new Loan;
         $loan->loan_amount = $request->loan_amount;
@@ -50,8 +50,24 @@ class LoanController extends Controller
         $loan->pmt = $request->loan_amount * ($request->interest_rate/100 / 12) / (1 - ((1 + ($request->interest_rate/100 / 12)) ** (-12 * $request->loan_term)));
         $loan->save();
 
-//        $repaymentScheduler = new RepaymentSchedule;
+        $outstandingBalance = $request->loan_amount;
+        $datetime = new DateTime($loan->start_date);
+        $paymentNo = 1;
+        while ($outstandingBalance > 0.1) {
+            $interest = ($loan->interest_rate / 12) * $outstandingBalance;
+            $outstandingBalance = $outstandingBalance - ($loan->pmt - $interest);
 
+            $repaymentScheduler = new RepaymentSchedule;
+            $repaymentScheduler->payment_no = $paymentNo;
+            $repaymentScheduler->payment_date = $datetime;
+            $repaymentScheduler->balance = $outstandingBalance;
+            $repaymentScheduler->principal = ($loan->pmt - $interest);
+            $repaymentScheduler->interest = $interest;
+            $repaymentScheduler->loan()->associate($loan);
+            $repaymentScheduler->save();
+            date_add($datetime, date_interval_create_from_date_string('1 months'));
+            $paymentNo = $paymentNo + 1;
+        }
 
         return redirect('/loan');
     }
