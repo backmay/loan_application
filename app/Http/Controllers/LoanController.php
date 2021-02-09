@@ -58,8 +58,6 @@ class LoanController extends Controller
         $loan->pmt = $pmt;
         $loan->save();
 
-        echo(gettype($loanStartDate));
-
 //      Loop create RepaymentSchedule
         $outstandingBalance = $loanAmount;
         $paymentNo = 1;
@@ -90,31 +88,6 @@ class LoanController extends Controller
     {
         $data = Loan::find($id);
         $paymentSchedule = RepaymentSchedule::where('loan_id', $id)->get();
-//        dd($paymentSchedule);
-//        dd($paymentSchedule);
-
-//        $LoanAmount = $data->loan_amount;
-//        $loanTerm = $data->loan_term;
-//        $interestRate = $data->interest_rate;
-//        $PMT = $LoanAmount * ($interestRate / 12) / (1 - ((1 + ($interestRate / 12)) ** (-12 * $loanTerm)));
-//
-//        $outstandingBalance = $LoanAmount;
-//        $datetime = new DateTime($data->start_date);
-//        $paymentSchedule = array();
-//        while ($outstandingBalance > 0.1) {
-//            $interest = ($interestRate / 12) * $outstandingBalance;
-//            $outstandingBalance = $outstandingBalance - ($PMT - $interest);
-//            $payment = [
-//                "datetime" => date_format($datetime, 'M Y'),
-//                "outstanding_balance" => $outstandingBalance,
-//                "payment_amount" => $PMT,
-//                "interest" => $interest,
-//                "principal" => ($PMT - $interest)
-//
-//            ];
-//            array_push($paymentSchedule, $payment);
-//            date_add($datetime, date_interval_create_from_date_string('1 months'));
-//        }
         return view('loan.show', compact(['data', 'paymentSchedule']));
     }
 
@@ -162,6 +135,7 @@ class LoanController extends Controller
     public function destroy($id)
     {
         Loan::find($id)->delete();
+        RepaymentSchedule::where('loan_id', $id)->delete();
         return redirect('/loan');
     }
 }
