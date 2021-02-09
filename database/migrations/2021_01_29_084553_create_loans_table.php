@@ -18,7 +18,7 @@ class CreateLoansTable extends Migration
             $table->decimal('loan_amount', $precision = 21, $scale = 6);
             $table->decimal('interest_rate', $precision = 21, $scale = 6);
             $table->decimal('loan_term', $precision = 21, $scale = 6);
-            $table->datetime('start_date');
+            $table->timestamp('start_date');
             $table->timestamps();
         });
     }
