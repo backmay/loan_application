@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use Tests\TestCase;
 use App\Loan;
 use App\RepaymentSchedule;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 class ExampleTest extends TestCase
 
 {
@@ -14,24 +14,25 @@ class ExampleTest extends TestCase
      *
      * @return void
      */
-//    use DatabaseTransactions;
-    public function testEmptyDatabase()
-    {
-        $this->artisan('migrate:fresh');
-        $this->assertDatabaseCount('loans', 0);
-    }
+    use DatabaseMigrations;
+//    public function testEmptyDatabase()
+//    {
+//        $this->artisan('migrate:fresh');
+//        $this->assertDatabaseCount('loans', 0);
+//        $this->assertDatabaseCount('repayment_schedules', 0);
+//    }
 
-    public function testCreateLoan()
-    {
-        $loan = factory(Loan::class)->make();
-        $this->assertInstanceOf(Loan::class, $loan);
-    }
-
-    public function testCreateRepaymentSchedule()
-    {
-        $loan = factory(RepaymentSchedule::class)->make();
-        $this->assertInstanceOf(RepaymentSchedule::class, $loan);
-    }
+//    public function testCreateLoan()
+//    {
+//        $loan = factory(Loan::class)->make();
+//        $this->assertInstanceOf(Loan::class, $loan);
+//    }
+//
+//    public function testCreateRepaymentSchedule()
+//    {
+//        $loan = factory(RepaymentSchedule::class)->make();
+//        $this->assertInstanceOf(RepaymentSchedule::class, $loan);
+//    }
 
     public function testLoanIndexView()
     {
@@ -70,6 +71,15 @@ class ExampleTest extends TestCase
 
     public function testLoanView()
     {
+        $formData = [
+            'loan_amount' => 12345678,
+            'loan_term' => 9,
+            'interest_rate' => 10.11,
+            'year' => '2020',
+            'month' => '1'
+        ];
+        $this->post(route('loan.store'), $formData);
+
         $response = $this->get('/loan/1');
         $response->assertStatus(200);
         $response->assertViewIs('loan.show');
@@ -79,6 +89,15 @@ class ExampleTest extends TestCase
 
     public function testLoanEditView()
     {
+        $formData = [
+            'loan_amount' => 12345678,
+            'loan_term' => 9,
+            'interest_rate' => 10.11,
+            'year' => '2020',
+            'month' => '1'
+        ];
+        $this->post(route('loan.store'), $formData);
+
         $response = $this->get('/loan/1/edit');
         $response->assertStatus(200);
         $response->assertViewIs('loan.edit');
@@ -86,14 +105,23 @@ class ExampleTest extends TestCase
 
     public function testLoanUpdate()
     {
-        $formData = [
+        $formCreateData = [
+            'loan_amount' => 12345678,
+            'loan_term' => 9,
+            'interest_rate' => 10.11,
+            'year' => '2020',
+            'month' => '1'
+        ];
+        $this->post(route('loan.store'), $formCreateData);
+
+        $formUpdateData = [
             'loan_amount' => 987654321,
             'loan_term' => 6,
             'interest_rate' => 11.10,
             'year' => '2021',
             'month' => '1'
         ];
-        $response = $this->put('/loan/1', $formData);
+        $response = $this->put('/loan/1', $formUpdateData);
         $response->assertStatus(302);
         $this->assertDatabaseHas('loans', [
             'loan_amount' => 987654321,
@@ -105,6 +133,15 @@ class ExampleTest extends TestCase
 
     public function testLoanDelete()
     {
+        $formCreateData = [
+            'loan_amount' => 12345678,
+            'loan_term' => 9,
+            'interest_rate' => 10.11,
+            'year' => '2020',
+            'month' => '1'
+        ];
+        $this->post(route('loan.store'), $formCreateData);
+
         $response = $this->delete('/loan/1');
         $response->assertStatus(302);
         $this->assertDatabaseCount('loans', 0);
