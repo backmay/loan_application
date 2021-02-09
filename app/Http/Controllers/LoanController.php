@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use \App\Http\Requests\StoreAndUpdateRequest;
 use App\Loan;
 use \Datetime;
+use MongoDB\BSON\Timestamp;
 
 class LoanController extends Controller
 {
@@ -42,33 +43,40 @@ class LoanController extends Controller
     {
         $request->validated();
 
+        $loanAmount = $request->input('loan_amount');
+        $loanTerm = $request->input('loan_term');
+        $loanInterestRate = $request->input('interest_rate');
+        $loanStartDate = new DateTime( $request->input('year') . '-' . $request->input('month') . '-01');
+        $pmt = $loanAmount * ($loanInterestRate/100/12) / (1 - ((1 + ($loanInterestRate/100/12)) ** (-12 * $loanTerm)));
+
+//      Create Loan
         $loan = new Loan;
-        $loan->loan_amount = $request->loan_amount;
-        $loan->loan_term = $request->loan_term;
-        $loan->interest_rate = $request->interest_rate/100;
-        $loan->start_date = $request->year . '-' . $request->month . '-01';
-        $loan->pmt = $request->loan_amount * ($request->interest_rate/100 / 12) / (1 - ((1 + ($request->interest_rate/100 / 12)) ** (-12 * $request->loan_term)));
+        $loan->loan_amount = $loanAmount;
+        $loan->loan_term = $loanTerm;
+        $loan->interest_rate = $loanInterestRate;
+        $loan->start_date = $loanStartDate;
+        $loan->pmt = $pmt;
         $loan->save();
 
-        $outstandingBalance = $request->loan_amount;
-        $datetime = new DateTime($loan->start_date);
+        echo(gettype($loanStartDate));
+
+//      Loop create RepaymentSchedule
+        $outstandingBalance = $loanAmount;
         $paymentNo = 1;
         while ($outstandingBalance > 0.1) {
-            $interest = ($loan->interest_rate / 12) * $outstandingBalance;
+            $interest = ($loanInterestRate / 100 / 12) * $outstandingBalance;
             $outstandingBalance = $outstandingBalance - ($loan->pmt - $interest);
-
             $repaymentScheduler = new RepaymentSchedule;
             $repaymentScheduler->payment_no = $paymentNo;
-            $repaymentScheduler->payment_date = $datetime;
+            $repaymentScheduler->payment_date = $loanStartDate;
             $repaymentScheduler->balance = $outstandingBalance;
             $repaymentScheduler->principal = ($loan->pmt - $interest);
             $repaymentScheduler->interest = $interest;
             $repaymentScheduler->loan()->associate($loan);
             $repaymentScheduler->save();
-            date_add($datetime, date_interval_create_from_date_string('1 months'));
+            date_add($loanStartDate, date_interval_create_from_date_string('1 months'));
             $paymentNo = $paymentNo + 1;
         }
-
         return redirect('/loan');
     }
 
@@ -81,29 +89,32 @@ class LoanController extends Controller
     public function show($id)
     {
         $data = Loan::find($id);
+        $paymentSchedule = RepaymentSchedule::where('loan_id', $id)->get();
+//        dd($paymentSchedule);
+//        dd($paymentSchedule);
 
-        $LoanAmount = $data->loan_amount;
-        $loanTerm = $data->loan_term;
-        $interestRate = $data->interest_rate;
-        $PMT = $LoanAmount * ($interestRate / 12) / (1 - ((1 + ($interestRate / 12)) ** (-12 * $loanTerm)));
-
-        $outstandingBalance = $LoanAmount;
-        $datetime = new DateTime($data->start_date);
-        $paymentSchedule = array();
-        while ($outstandingBalance > 0.1) {
-            $interest = ($interestRate / 12) * $outstandingBalance;
-            $outstandingBalance = $outstandingBalance - ($PMT - $interest);
-            $payment = [
-                "datetime" => date_format($datetime, 'M Y'),
-                "outstanding_balance" => $outstandingBalance,
-                "payment_amount" => $PMT,
-                "interest" => $interest,
-                "principal" => ($PMT - $interest)
-
-            ];
-            array_push($paymentSchedule, $payment);
-            date_add($datetime, date_interval_create_from_date_string('1 months'));
-        }
+//        $LoanAmount = $data->loan_amount;
+//        $loanTerm = $data->loan_term;
+//        $interestRate = $data->interest_rate;
+//        $PMT = $LoanAmount * ($interestRate / 12) / (1 - ((1 + ($interestRate / 12)) ** (-12 * $loanTerm)));
+//
+//        $outstandingBalance = $LoanAmount;
+//        $datetime = new DateTime($data->start_date);
+//        $paymentSchedule = array();
+//        while ($outstandingBalance > 0.1) {
+//            $interest = ($interestRate / 12) * $outstandingBalance;
+//            $outstandingBalance = $outstandingBalance - ($PMT - $interest);
+//            $payment = [
+//                "datetime" => date_format($datetime, 'M Y'),
+//                "outstanding_balance" => $outstandingBalance,
+//                "payment_amount" => $PMT,
+//                "interest" => $interest,
+//                "principal" => ($PMT - $interest)
+//
+//            ];
+//            array_push($paymentSchedule, $payment);
+//            date_add($datetime, date_interval_create_from_date_string('1 months'));
+//        }
         return view('loan.show', compact(['data', 'paymentSchedule']));
     }
 

@@ -22,7 +22,7 @@
             </tr>
             <tr>
                 <td>Created at:</td>
-                <td>{{ $data->created_at}}</td>
+                <td>{{ $data->created_at }}</td>
             </tr>
         </tbody>
     </table>
@@ -43,12 +43,12 @@
         <tbody>
             @foreach($paymentSchedule as $attribute => $value)
             <tr>
-                <td>{{ $attribute + 1}}</td>
-                <td>{{ $value['datetime'] }}</td>
-                <td>{{ number_format($value['payment_amount'], 2) }}</td>
-                <td>{{ number_format($value['principal'], 2) }}</td>
-                <td>{{ number_format($value['interest'], 2) }}</td>
-                <td>{{ number_format($value['outstanding_balance'], 2) }}</td>
+                <td>{{ $value->payment_no }}</td>
+                <td>{{ date('M Y', strtotime($value->payment_date)) }}</td>
+                <td>{{ number_format($data->pmt, 2) }}</td>
+                <td>{{ number_format($value->principal, 2) }}</td>
+                <td>{{ number_format($value->interest, 2) }}</td>
+                <td>{{ number_format($value->balance, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
