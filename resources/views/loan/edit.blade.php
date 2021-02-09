@@ -19,7 +19,7 @@
                         {!! Form::label('loan_amount', 'Loan Amount : ', ['class' => 'float-right']) !!}
                     </div>
                     <div class="col-md-9">
-                        {!! Form::text('loan_amount', number_format($data->loan_amount, 2), ["class"=>"form-control"]) !!}
+                        {!! Form::text('loan_amount', number_format($data->loan_amount, 0, '', ''), ["class"=>"form-control"]) !!}
                     </div>
                 </div>
             </div>
