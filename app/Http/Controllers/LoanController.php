@@ -58,23 +58,8 @@ class LoanController extends Controller
         $loan->pmt = $pmt;
         $loan->save();
 
-//      Loop create RepaymentSchedule
-        $outstandingBalance = $loanAmount;
-        $paymentNo = 1;
-        while ($outstandingBalance > 0.1) {
-            $interest = ($loanInterestRate / 100 / 12) * $outstandingBalance;
-            $outstandingBalance = $outstandingBalance - ($loan->pmt - $interest);
-            $repaymentScheduler = new RepaymentSchedule;
-            $repaymentScheduler->payment_no = $paymentNo;
-            $repaymentScheduler->payment_date = $loanStartDate;
-            $repaymentScheduler->balance = $outstandingBalance;
-            $repaymentScheduler->principal = ($loan->pmt - $interest);
-            $repaymentScheduler->interest = $interest;
-            $repaymentScheduler->loan()->associate($loan);
-            $repaymentScheduler->save();
-            date_add($loanStartDate, date_interval_create_from_date_string('1 months'));
-            $paymentNo = $paymentNo + 1;
-        }
+        $this->createRepaymentSchedule($loan);
+
         return redirect('/loan');
     }
 
@@ -116,13 +101,26 @@ class LoanController extends Controller
      */
     public function update(StoreAndUpdateRequest $request, $id)
     {
-        $validated = $request->validated();
-        Loan::find($id)->update([
-            'loan_amount' => $request->loan_amount,
-            'loan_term' => $request->loan_term,
-            'interest_rate' => $request->interest_rate,
-            'start_date' => $request->year . '-' . $request->month . '-01',
+        $request->validated();
+
+        $loanAmount = $request->input('loan_amount');
+        $loanTerm = $request->input('loan_term');
+        $loanInterestRate = $request->input('interest_rate');
+        $loanStartDate = new DateTime( $request->input('year') . '-' . $request->input('month') . '-01');
+        $pmt = $loanAmount * ($loanInterestRate/100/12) / (1 - ((1 + ($loanInterestRate/100/12)) ** (-12 * $loanTerm)));
+
+        $loan = Loan::find($id);
+        $loan->update([
+            'loan_amount' => $loanAmount,
+            'loan_term' => $loanTerm,
+            'interest_rate' => $loanInterestRate,
+            'start_date' => $loanStartDate,
+            'pmt' => $pmt,
         ]);
+
+        RepaymentSchedule::where('loan_id', $id)->delete();
+        $this->createRepaymentSchedule($loan);
+
         return redirect('/loan');
     }
 
@@ -137,5 +135,27 @@ class LoanController extends Controller
         Loan::find($id)->delete();
         RepaymentSchedule::where('loan_id', $id)->delete();
         return redirect('/loan');
+    }
+
+    public function createRepaymentSchedule($loan)
+    {
+        //      Loop create RepaymentSchedule
+        $outstandingBalance = $loan->loan_amount;
+        $loanStartDate = $loan->start_date;
+        $paymentNo = 1;
+        while ($outstandingBalance > 0.1) {
+            $interest = ($loan->interest_rate / 100 / 12) * $outstandingBalance;
+            $outstandingBalance = $outstandingBalance - ($loan->pmt - $interest);
+            $repaymentScheduler = new RepaymentSchedule;
+            $repaymentScheduler->payment_no = $paymentNo;
+            $repaymentScheduler->payment_date = $loanStartDate;
+            $repaymentScheduler->balance = $outstandingBalance;
+            $repaymentScheduler->principal = ($loan->pmt - $interest);
+            $repaymentScheduler->interest = $interest;
+            $repaymentScheduler->loan()->associate($loan);
+            $repaymentScheduler->save();
+            date_add($loanStartDate, date_interval_create_from_date_string('1 months'));
+            $paymentNo = $paymentNo + 1;
+        }
     }
 }
