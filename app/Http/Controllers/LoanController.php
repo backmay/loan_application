@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use \App\Http\Requests\StoreAndUpdateRequest;
 use App\Loan;
 use \Datetime;
-use MongoDB\BSON\Timestamp;
 
 class LoanController extends Controller
 {
@@ -41,8 +40,6 @@ class LoanController extends Controller
      */
     public function store(StoreAndUpdateRequest $request)
     {
-        $request->validated();
-
         $loanAmount = $request->input('loan_amount');
         $loanTerm = $request->input('loan_term');
         $loanInterestRate = $request->input('interest_rate');
@@ -101,8 +98,6 @@ class LoanController extends Controller
      */
     public function update(StoreAndUpdateRequest $request, $id)
     {
-        $request->validated();
-
         $loanAmount = $request->input('loan_amount');
         $loanTerm = $request->input('loan_term');
         $loanInterestRate = $request->input('interest_rate');
