@@ -82,9 +82,8 @@ class LoanController extends Controller
     public function edit($id)
     {
         $data = Loan::find($id);
-        $dateTime = new DateTime($data->start_date);
-        $data->year = $dateTime->format('Y');
-        $data->month = $dateTime->format('n');
+        $data->year = $data->start_date->format('Y');
+        $data->month = $data->start_date->format('n');
 
         return view('loan.edit', compact(['data']));
     }

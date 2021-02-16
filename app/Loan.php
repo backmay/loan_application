@@ -12,6 +12,10 @@ class Loan extends Model
         'loan_amount', 'loan_term', 'interest_rate', 'start_date', 'pmt',
     ];
 
+    protected $casts = [
+        'start_date' => 'datetime',
+    ];
+
     public function repaymentSchedule()
     {
         return $this->hasMany(RepaymentSchedule::class, loan_id, id);
